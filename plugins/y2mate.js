@@ -1,4 +1,4 @@
-const { y2mate, bot, getBuffer, addAudioMetaData, yts, generateList, isUrl, lang } = require('../lib/')
+const { y2mate, bot, yts, generateList, lang } = require('../lib/')
 const ytIdRegex =
   /(?:http(?:s|):\/\/|)(?:(?:www\.|)youtube(?:\-nocookie|)\.com\/(?:watch\?.*(?:|\&)v=|embed|shorts\/|v\/)|youtu\.be\/)([-_0-9A-Za-z]{11})/
 
@@ -14,8 +14,9 @@ bot(
 
     if (match.startsWith('y2mate;')) {
       const [_, q, id] = match.split(';')
-      const result = await y2mate.dl(id, 'video', q)
-      return await message.sendFromUrl(result, { quoted: message.data })
+      const url = await y2mate.dl(id, 'video', q)
+      if (!url) return await message.send(lang.plugins.y2mate.no_video, { quoted: message.data })
+      return await message.sendFromUrl(url, { quoted: message.data })
     }
 
     if (!ytIdRegex.test(match)) {
@@ -23,9 +24,6 @@ bot(
     }
 
     const vid = ytIdRegex.exec(match)
-    const res = await y2mate.get(vid[1], 'video')
-    if (isUrl(res)) return await message.sendFromUrl(res, { quoted: message.data })
-
     const { title, video, thumbnail, time } = await y2mate.get(vid[1])
     const buttons = []
 
@@ -70,25 +68,26 @@ bot(
     if (!match) return await message.send(lang.plugins.y2mate.yta_usage)
 
     const vid = ytIdRegex.exec(match)
-    if (vid) match = vid[1]
+    let id, title, thumbUrl
 
-    const [video] = await yts(match, !!vid, null, message.id)
-    const { title, thumbnail, id } = video
-    const audio = await y2mate.get(id, 'audio')
+    if (vid) {
+      id = vid[1]
+      const info = await y2mate.get(id)
+      if (!info) return await message.send(lang.plugins.y2mate.no_audio, { quoted: message.data })
+      title = info.title
+      thumbUrl = info.thumbnail
+    } else {
+      const [video] = await yts(match, false, null, message.id)
+      if (!video) return await message.send(lang.plugins.y2mate.no_audio, { quoted: message.data })
+      id = video.id
+      title = video.title
+      thumbUrl = video.thumbnail?.url
+    }
 
-    if (isUrl(audio)) return await message.sendFromUrl(audio, { quoted: message.data })
+    const url = await y2mate.dl(id, 'audio')
+    if (!url) return await message.send(lang.plugins.y2mate.no_audio, { quoted: message.data })
 
-    const result = await y2mate.dl(id, 'audio')
+    return await message.sendFromUrl(url, { quoted: message.data, mimetype: 'audio/mpeg' })
 
-    if (!result) return await message.send(lang.plugins.y2mate.no_audio, { quoted: message.data })
-
-    const { buffer } = await getBuffer(result)
-    if (!buffer) return await message.send(result, { quoted: message.data })
-
-    return await message.send(
-      await addAudioMetaData(buffer, title, '', '', thumbnail.url),
-      { quoted: message.data, mimetype: 'audio/mpeg' },
-      'audio'
-    )
   }
 )
