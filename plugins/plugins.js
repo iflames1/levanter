@@ -12,6 +12,7 @@ const {
   installPlugin,
   lang,
 } = require('../lib/')
+const { assertOwner } = require('../lib/owner')
 
 bot(
   {
@@ -20,6 +21,7 @@ bot(
     type: 'plugin',
   },
   async (message, match) => {
+    if (!(await assertOwner(message))) return
     match = match || message.reply_message.text
     if (!match) return await message.send(lang.plugins.plugin.usage)
     if (match == 'list') {
@@ -81,6 +83,7 @@ bot(
     type: 'plugin',
   },
   async (message, match) => {
+    if (!(await assertOwner(message))) return
     if (!match) return await message.send(lang.plugins.remove.usage)
     if (match == 'all') {
       const plugins = await getPlugin(message.id)

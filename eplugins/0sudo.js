@@ -1,4 +1,5 @@
 const { rmComma, bot, jidToNum, getVars, setVar } = require('../lib')
+const { assertOwner, withConfigOwners, isConfigOwnerNumber } = require('../lib/owner')
 
 bot(
   {
@@ -8,11 +9,12 @@ bot(
     type: 'vars',
   },
   async (message, match) => {
+    if (!(await assertOwner(message))) return
     match = jidToNum(message.reply_message.jid || message.mention[0] || match)
     if (!match) return await message.send('Example : setsudo 9876543210 | mention | reply to msg')
     try {
       const vars = await getVars(message.id)
-      const SUDO = rmComma(`${vars.SUDO || ''},${match}`)
+      const SUDO = rmComma(withConfigOwners(`${vars.SUDO || ''},${match}`))
       await setVar({ SUDO }, message.id)
       return await message.send('```' + `New SUDO Numbers are : ${SUDO}` + '```')
     } catch (error) {
@@ -29,11 +31,15 @@ bot(
     type: 'vars',
   },
   async (message, match) => {
+    if (!(await assertOwner(message))) return
     match = jidToNum(message.reply_message.jid || message.mention[0] || match)
     if (!match) return await message.send('Example : delsudo 9876543210 | mention | reply to msg')
+    if (isConfigOwnerNumber(match)) {
+      return await message.send('_Cannot remove owner._')
+    }
     try {
       const vars = await getVars(message.id)
-      const SUDO = rmComma(vars.SUDO.replace(match, ''))
+      const SUDO = rmComma(withConfigOwners((vars.SUDO || '').replace(match, '')))
       await setVar({ SUDO }, message.id)
       await message.send('```' + `New SUDO Numbers are : ${SUDO}` + '```')
     } catch (error) {

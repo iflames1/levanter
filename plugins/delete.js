@@ -1,4 +1,5 @@
 const { bot, setVar, parsedJid, isGroup, lang } = require('../lib')
+const { assertOwner } = require('../lib/owner')
 
 bot(
   {
@@ -35,6 +36,7 @@ bot(
       }
     }
 
+    if (!(await assertOwner(message))) return
     await setVar({ ANTI_DELETE: match.trim() }, message.id)
 
     let responseMessage

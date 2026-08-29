@@ -1,4 +1,5 @@
 const { bot, setVar, getVars, lang } = require('../lib')
+const { assertOwner } = require('../lib/owner')
 
 bot(
   {
@@ -7,6 +8,7 @@ bot(
     type: 'personal',
   },
   async (message, match) => {
+    if (!(await assertOwner(message))) return
     if (!match) return await message.send(lang.plugins.greet.setexample)
 
     await setVar({ PERSONAL_MESSAGE: match }, message.id)
@@ -38,6 +40,7 @@ bot(
     type: 'personal',
   },
   async (message, match) => {
+    if (!(await assertOwner(message))) return
     await setVar({ PERSONAL_MESSAGE: 'null' }, message.id)
 
     return await message.send(lang.plugins.greet.delupdate)
