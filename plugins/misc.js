@@ -1,5 +1,4 @@
 const { bot, setVar, lang, parsedJid } = require('../lib/')
-const { assertOwner } = require('../lib/owner')
 
 
 function parseReadValue(match) {
@@ -26,7 +25,6 @@ function parseReadValue(match) {
 }
 
 async function handleSetting(message, setting, match) {
-  if (!(await assertOwner(message))) return false
   if (match === 'on' || match === 'off') {
     await setVar(
       {
@@ -35,7 +33,6 @@ async function handleSetting(message, setting, match) {
       message.id
     )
   }
-  return true
 }
 
 bot(
@@ -48,7 +45,7 @@ bot(
     if (!match) {
       return await message.send(lang.plugins.status.usage)
     }
-    if (!(await handleSetting(message, 'AUTO_STATUS_VIEW', match))) return
+    await handleSetting(message, 'AUTO_STATUS_VIEW', match)
     await message.send(lang.plugins.common.update)
   }
 )
@@ -63,7 +60,7 @@ bot(
     if (!match) {
       return await message.send(lang.plugins.call.usage)
     }
-    if (!(await handleSetting(message, 'REJECT_CALL', match))) return
+    await handleSetting(message, 'REJECT_CALL', match)
     await message.send(lang.plugins.common.update)
   }
 )
@@ -78,7 +75,6 @@ bot(
     if (!match) {
       return await message.send(lang.plugins.read.usage)
     }
-    if (!(await assertOwner(message))) return
     const value = parseReadValue(match)
     if (value === null) {
       return await message.send(lang.plugins.read.usage)
@@ -98,7 +94,7 @@ bot(
     if (!match) {
       return await message.send(lang.plugins.online.usage)
     }
-    if (!(await handleSetting(message, 'ALWAYS_ONLINE', match))) return
+    await handleSetting(message, 'ALWAYS_ONLINE', match)
     await message.send(lang.plugins.common.update)
   }
 )

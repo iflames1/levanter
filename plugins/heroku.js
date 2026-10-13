@@ -1,7 +1,6 @@
 const Heroku = require('heroku-client')
 const { secondsToHms, isUpdate, updateNow, bot, lang } = require('../lib/')
 const Config = require('../config')
-const { assertOwner } = require('../lib/owner')
 const { default: axios } = require('axios')
 const heroku = new Heroku({ token: Config.HEROKU_API_KEY })
 const baseURI = '/apps/' + Config.HEROKU_APP_NAME
@@ -15,7 +14,6 @@ if (Config.HEROKU_API_KEY && Config.HEROKU_APP_NAME) {
       type: 'heroku',
     },
     async (message, match) => {
-      if (!(await assertOwner(message))) return
       await message.send(lang.plugins.heroku.restart_msg)
       await heroku.delete(baseURI + '/dynos').catch(async (error) => {
         await message.send(lang.plugins.heroku.error_prefix.format(error.body.message))
@@ -31,7 +29,6 @@ if (Config.HEROKU_API_KEY && Config.HEROKU_APP_NAME) {
       type: 'heroku',
     },
     async (message, match) => {
-      if (!(await assertOwner(message))) return
       await heroku
         .get(baseURI + '/formation')
         .then(async (formation) => {
@@ -56,7 +53,6 @@ if (Config.HEROKU_API_KEY && Config.HEROKU_APP_NAME) {
       type: 'heroku',
     },
     async (message, match) => {
-      if (!(await assertOwner(message))) return
       try {
         heroku
           .get('/account')
@@ -94,7 +90,6 @@ bot(
     type: 'bot',
   },
   async (message) => {
-    if (!(await assertOwner(message))) return
     const update = await isUpdate()
     if (!update.length) return await message.send(lang.plugins.update.up_to_date)
     await message.send(lang.plugins.update.available.format(update.length, update.join('\n')))
@@ -108,7 +103,6 @@ bot(
     type: 'bot',
   },
   async (message) => {
-    if (!(await assertOwner(message))) return
     const isupdate = await isUpdate()
     if (!isupdate.length) return await message.send(lang.plugins.update_now.up_to_date)
     await message.send(lang.plugins.update_now.updating)
